@@ -1,0 +1,221 @@
+<title>Chapter 3 Tracker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: sticky progress header, then one collapsible card per region in play order, tap a row to tick it. */
+:root{--bg:#eaf0f5;--card:#ffffff;--ink:#12202c;--mute:#5a6b7a;--line:#d3dde6;--accent:#1f6fd1;--done:#2e8b57;
+--boss:#c43d3d;--spirit:#7a4fc4;--item:#1f6fd1;--quest:#b7791f;--med:#2e8b57;--rand:#6b7885;--ng:#a35a00;
+--fd:"Bricolage Grotesque",system-ui,sans-serif;--fb:"Instrument Sans",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1a24;--card:#17252f;--ink:#e6eef5;--mute:#93a5b5;--line:#2a3b49;--accent:#5aa2f5;--done:#5cc48a;--boss:#ef7a7a;--spirit:#b595f0;--item:#6fb0f7;--quest:#e5b25a;--med:#5cc48a;--rand:#94a3b0;--ng:#f0a24a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1a24;--card:#17252f;--ink:#e6eef5;--mute:#93a5b5;--line:#2a3b49;--accent:#5aa2f5;--done:#5cc48a;--boss:#ef7a7a;--spirit:#b595f0;--item:#6fb0f7;--quest:#e5b25a;--med:#5cc48a;--rand:#94a3b0;--ng:#f0a24a;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--fb);font-size:16px;line-height:1.4}
+.wrap{max-width:720px;margin:0 auto;padding-block:0 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding-block:14px 10px;z-index:5;border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+h1{font-family:var(--fd);font-weight:800;font-size:26px;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--mute);font-size:14px;margin:2px 0 10px}
+.bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--done);transition:width .25s}
+.count{display:flex;justify-content:space-between;font-size:13px;color:var(--mute);margin-top:6px;font-variant-numeric:tabular-nums}
+.first{margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+.first h2{font-family:var(--fd);font-size:18px;margin:0 0 8px}
+.first p{margin:6px 0;font-size:15px}
+.ng{color:var(--ng);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 4px}
+.tag{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border:1.5px solid currentColor;border-radius:4px;padding:1px 6px;white-space:nowrap}
+.t-boss{color:var(--boss)}.t-spirit{color:var(--spirit)}.t-item{color:var(--item)}.t-quest{color:var(--quest)}.t-med{color:var(--med)}.t-rand{color:var(--rand);border-style:dashed}.t-ng{color:var(--ng)}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-top:12px;overflow:hidden}
+summary{list-style:none;cursor:pointer;padding:14px;display:flex;align-items:center;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary:focus-visible,.row:focus-within{outline:2px solid var(--accent);outline-offset:-2px}
+.rn{font-family:var(--fd);font-weight:800;font-size:18px;flex:1;min-width:0}
+.rn small{display:block;font-family:var(--fb);font-weight:400;font-size:13px;color:var(--mute)}
+.rc{font-size:14px;color:var(--mute);font-variant-numeric:tabular-nums}
+.rb{height:4px;background:var(--line)}.rb i{display:block;height:100%;width:0;background:var(--done)}
+.grp{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);padding:12px 14px 4px}
+.row{display:flex;gap:12px;align-items:flex-start;padding:10px 14px;border-top:1px solid var(--line);cursor:pointer;min-height:48px}
+.row input{width:22px;height:22px;margin:1px 0 0;flex:none;accent-color:var(--done)}
+.row .tx{flex:1;min-width:0}
+.row .tx b{font-weight:600}
+.row .tx span{display:block;color:var(--mute);font-size:14px}
+.row.done .tx{opacity:.5;text-decoration:line-through}
+.row .tag{margin-top:2px}
+.w{flex:none;align-self:center;font-size:12px;font-weight:600;color:var(--accent);border:1.5px solid var(--accent);border-radius:6px;padding:6px 8px;text-decoration:none;min-height:32px;display:inline-flex;align-items:center}
+.foot{margin-top:24px;font-size:13px;color:var(--mute)}
+button{font:inherit;background:none;border:1.5px solid var(--line);color:var(--mute);border-radius:8px;padding:8px 12px;cursor:pointer;min-height:40px}
+</style>
+<div class="wrap">
+<header>
+<h1>Chapter 3 Tracker</h1>
+<p class="sub">Snowhill Path to Yellowbrow. Tap a row to tick it.</p>
+<div class="bar"><i id="tb"></i></div>
+<div class="count"><span id="tc">0 of 0 done</span><span id="tp">0%</span></div>
+</header>
+
+<section class="first">
+<h2>Your starting point</h2>
+<p><b>Already done:</b> Zodiac Village, Spell Binder. That means Captain Wise-Voice is dead.</p>
+<p><span class="ng">Check now:</span> Equipment, Curios, Auspicious Lantern. Missing means NG+ only.</p>
+<p><span class="ng">Check now:</span> Journal, Apramana Bat. Missing means it is gone until NG+. Pick it up only if the fight is still there at the North Shore with Bajie.</p>
+<p>Goal: tick everything below, then fight Yellowbrow last.</p>
+</section>
+
+<div class="legend">
+<span class="tag t-boss">Boss</span><span class="tag t-spirit">Spirit</span><span class="tag t-item">Item</span><span class="tag t-quest">Quest</span><span class="tag t-med">Meditate</span><span class="tag t-rand">Random drop</span>
+</div>
+<div id="app"></div>
+<p class="foot">Random drops are marked with a dashed tag. Everything else is guaranteed. Ticks stay in this browser only.</p>
+<p><button id="reset">Clear all ticks</button></p>
+</div>
+<script>
+var R=[
+{n:"Snowhill Path",s:"Frost-Clad Path, Mirrormere",g:[
+["Fight",[
+["boss","Macaque Chief","Top of Frost-Clad Path. Story fight."],
+["spirit","Mountain Patroller","Turn left at the top of the steps. Chest nearby: Blood of the Iron Bull."],
+["boss","Kang-Jin Loong","Walk onto the frozen lake. Story fight."]]],
+["Collect",[
+["med","The Shade","Left of the big tree by the lake, wooden platform."],
+["item","Stranded Loong's Whisker","Turtle box on the small lake island, far right."],
+["rand","Mani Bead","Frozen corpses near the lake. Rest and repeat."]]]]},
+{n:"Pagoda Realm",s:"Lower and Upper Pagoda, Mani Wheel, Warding Temple",g:[
+["Cells and pagoda",[
+["item","Fine China Tea Bowl","Lower Pagoda, box on the table before the stairs."],
+["spirit","Fungiman","Upper Pagoda. Left cell past the beam, pull the mushroom."],
+["boss","Captain Lotus-Vision","Drop through the hole behind the Upper Pagoda shrine. Unseals all cells."],
+["item","Ashen Slumber (transformation)","Lower Pagoda, Prisoner cell, after Lotus-Vision."],
+["spirit","Enslaved Yaksha","Lower Pagoda cell, middle level."],
+["spirit","Blade Monk","Mani Wheel, drop to the lower section."],
+["item","Auspicious Lantern","Needs all 9 wardens before Wise-Voice. NG+ only if you don't have it."]]],
+["After the wheel",[
+["item","Luojia Fragrant Vine","Cave next to Outside the Wheel, glowing tree."],
+["item","Celestial Taiyi Pill","Container on the trail after the cave."],
+["med","The Bottom","Break the fence behind the pill. Follow the path."],
+["item","Awaken Wine Worm (2)","Jar at Mani Wheel and gold pot near the spirit enemy."],
+["spirit","Falcon Hermit","Snow-Veiled Trail, left at the split, straight on."],
+["boss","Macaque Chief (second fight)","Warding Temple. Gives Ring of Fire."],
+["boss","Kang-Jin Star","Slope behind Warding Temple. Bring lightning resistance. Unlocks the Loongscale set."]]]]},
+{n:"Bitter Lake",s:"Turtle Island, North Shore, Precept Corridor",g:[
+["Turtle Island",[
+["item","Celestial Jade Lotus Pill","Table on the lower left path from the shrine."],
+["item","Mind Core","Chest just past the pill table."],
+["boss","Cyan Loong","Right cliff. Chest after: Mountain-Shaking Claw, Breath of Fire."]]],
+["North Shore",[
+["boss","Apramana Bat","Snake skeleton ring, right along the coast. Bajie must be with you."],
+["item","Turtle Tear","Under the giant turtle's head, after the skull."],
+["boss","Chen Loong","Shallow water to the left. Starts the Ruyi Scroll quest."],
+["quest","Treasure Hunter","Kill 3 enemies on the ramp, talk to the victim."],
+["item","Bluebridge Romance (drink)","Small lake behind the ruined temple."],
+["item","Luojia Fragrant Vine (2)","Two visits: torch path on the left, and the alcove up the slope."]]],
+["Precept Corridor",[
+["item","Enhanced Tiger Subduing Pellets","Container at the foot of the hill, right of the shrine."],
+["med","The Statue","Left of the shrine, next to enemies."],
+["spirit","Red-Haired Yaksha","Stairs up on the left."],
+["rand","Bronze Buddha Pendant","Wolf Guardians. Rest and repeat."]]]]},
+{n:"Zodiac Village",s:"Already unlocked. Tidy up.",g:[
+["Do these",[
+["boss","Yin Tiger","Blacksmith, Challenge. Gives Ebon Flow and the Iron set."],
+["quest","Equip More Curios","Talk to Yin Tiger after winning. Third curio slot."],
+["quest","Request Medicine","Xu Dog. Free medicines."],
+["quest","Deliver Seeds","Chen Loong. One of each seed type counts toward Happy Harvest."],
+["item","Upgrade one armor piece","Blacksmith. Needed once for a trophy."],
+["quest","Craft the new weapons","Kang-Jin Staff, Golden Loong Staff, Loongscale set."]]]]},
+{n:"Valley of Ecstasy",s:"Mindfulness Cliff to Longevity Road",g:[
+["Mindfulness Cliff",[
+["item","Fiery Gourd","Drop right of the planks, follow the path to the chest."],
+["item","Skandha of Thought","Statue at the end of that path."],
+["item","Maitreya's Orb","Box in the room left of the first Non-White fight."],
+["spirit","Non-White","Second fight, small arena."],
+["med","The Track","Same arena."]]],
+["Forest of Felicity and nearby",[
+["spirit","Crow Diviner","Lone pond with a waterfall."],
+["spirit","Non-Able","Brook of Bliss, clearing before the spire."],
+["boss","Lang-Li-Guhh-Lang","Left tunnel to the frozen pond. Drops Tadpole."],
+["quest","Fox quest: take Snow Fox Brush","Frozen corpse at the left gate. Examine 3 times."],
+["quest","Treasure Hunter (Towers of Karma)","Cast Ring of Fire beside the shivering man."],
+["boss","Old Ginseng Guai","Gather the flowers by the back pillar. Gives spirit and Ginseng Cape."],
+["item","Jade Essence (drink)","Table behind that pillar."],
+["rand","Beast Buddha","Dual-Blade Monk left of Towers of Karma."]]],
+["Longevity Road",[
+["spirit","Captain Void-Illusion","Giant corpse right of the shrine."],
+["item","Awaken Wine Worm","Glowing pot on the left ledge."],
+["item","Luojia Fragrant Vine","Tree in the clearing with two Falcon Hermits."],
+["item","Gold Spikeplate","Giant Dark-faced Overlord on the left path."],
+["boss","Captain Kalpa-Wave","Right up the mountain."],
+["rand","Skull of Turtle Treasure","Turtle Treasure enemy."]]]]},
+{n:"New Thunderclap Temple",s:"Do all of this before the Yellowbrow door",g:[
+["Temple Entrance",[
+["item","Thunderstone","Container behind the statues in the top temple."],
+["spirit","Clay Vajra","Out the back of the central hall."],
+["boss","Monk from the Sea","Statue in the top-left corner. Gives Hoarfrost."],
+["item","Sweet Ice (soak)","Golden turtle box past the second Clay Vajra."],
+["quest","Horse Guai","Wooden bridge on the left. Box has the Dark Thunder formula."],
+["rand","Thunderflame Seal","Lightning mages on the stairs."],
+["rand","Vajra Armguard","Clay Vajra."],
+["rand","See No Evil","Overseeing Monks."]]],
+["Mahavira Hall",[
+["spirit","Non-Pure","Building on the left of the courtyard."],
+["med","The Hall","Same room as Non-Pure."],
+["quest","Ma Tianba","Second floor of the monastery. Talk 3 times."],
+["item","Body-Fleeting Powder","Container on that floor."],
+["spirit","Non-Void","Use Snow Fox Brush on the friendly monk's steps."],
+["item","Celestial Nonary Pill","Container in the garden. Frozen pond near the bridge has another."]]],
+["Turn-ins",[
+["quest","Fox quest: hand in","Back at Forest of Felicity. Gives the Snow Fox Brush curio."],
+["quest","Prisoner","Lower Pagoda. Hand over the captain spirits for Chubai Spearhead."]]],
+["Finish",[
+["boss","Yellowbrow","Mahavira Hall doors. Macaque Chief fight between the two phases."]]]]},
+{n:"Gear and secrets",s:"Craft or collect. Sources disagree on a few unlock bosses.",g:[
+["Weapons",[
+["item","Kang-Jin Staff","Craft after the Kang-Jin boss fights (guides differ on Loong or Star)."],
+["item","Golden Loong Staff","Craft after Cyan Loong. Needs the Loong Scales from Chapter 2."],
+["item","Chu-Bai Spear","Craft after the Prisoner quest. Costs 21,000 Will, Chubai Spearhead, 4 Refined Iron Sand, 8 Yaoguai Core."],
+["item","Spikeshaft Staff","Craft after Yellowbrow. Costs 30,000 Will, Spider Leg, 4 Gold Tree Core, 8 Refined Iron Sand."]]],
+["Armor sets",[
+["item","Golden set","Craft after finishing Chapter 3. Needs Cold Iron Leaves and Fine Gold Thread per piece."],
+["item","Loongscale set","Craft after Kang-Jin Star."],
+["item","Iron set","Craft after beating Yin Tiger."],
+["item","Non-Pure set","Craft after beating Non-Pure. One guide ties it to Chapter 5, so check the crafting list."],
+["item","Ginseng Cape","Old Ginseng Guai drop. Guaranteed."],
+["rand","See No Evil","Overseeing Monks at the Temple Entrance."],
+["rand","Vajra Armguard","Clay Vajra at the Temple Entrance."]]],
+["Spells and transformations",[
+["item","Ring of Fire","Macaque Chief at Warding Temple."],
+["item","Spell Binder","Green-Capped Martialist. You have it."],
+["item","Ashen Slumber","Lower Pagoda, after Captain Lotus-Vision."],
+["item","Hoarfrost","Monk from the Sea."],
+["item","Ebon Flow","Yin Tiger, after the Chen Loong quest."],
+["item","Umbral Abyss","Yellowbrow. Macaque Chief form, frost immunity."],
+["item","Azure Dome","Late game. Needs the Treasure Hunter quest and all secret area bosses."]]],
+["Secrets",[
+["quest","Painted World hub","Finish the Chen Loong pellet quest. Shen Monkey, Xu Dog, Chen Loong and Yin Tiger gather there."],
+["quest","Great Pagoda wall paintings","Right of Snow-Veiled Trail. Shows endings from earlier chapters."],
+["quest","Mount Mei secret area","Needs the Chapter 1, 2, 4 and 5 secret areas plus the Treasure Hunter quest, and Continue (not New Cycle) after Chapter 6. Great Pagoda, mural behind the statue, talk to the Monk."],
+["quest","Treasure Hunter: Melon Field fight","Brook of Bliss, jump into the ravine, drop to the platform, Melon Field shrine, approach the big Buddha."],
+["quest","Third Prince, four captains","Find all four captain spirits and hand them to the Prisoner."]]]]}
+];
+var KEY="ch3-tracker-v1",st={};
+try{st=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+var L={boss:"Boss",spirit:"Spirit",item:"Item",quest:"Quest",med:"Meditate",rand:"Random"};
+var app=document.getElementById("app"),total=0;
+R.forEach(function(r,ri){
+var d=document.createElement("details");if(ri===0)d.open=true;
+var h='<summary><div class="rn">'+r.n+'<small>'+r.s+'</small></div><span class="rc"></span></summary><div class="rb"><i></i></div>';
+r.g.forEach(function(g,gi){h+='<div class="grp">'+g[0]+'</div>';
+g[1].forEach(function(t,ti){total++;var id=ri+"-"+gi+"-"+ti;
+h+='<label class="row" data-id="'+id+'"><input type="checkbox"><span class="tx"><b>'+t[1]+'</b><span>'+t[2]+'</span></span><span class="tag t-'+t[0]+'">'+L[t[0]]+'</span><a class="w" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query='+encodeURIComponent('Black Myth Wukong '+t[1]+' location')+'">Video</a></label>'});});
+d.innerHTML=h;app.appendChild(d)});
+function upd(){var done=0;
+document.querySelectorAll("details").forEach(function(d){var rows=d.querySelectorAll(".row"),n=0;
+rows.forEach(function(r){var on=!!st[r.dataset.id];r.classList.toggle("done",on);r.querySelector("input").checked=on;if(on)n++});
+d.querySelector(".rc").textContent=n+"/"+rows.length;d.querySelector(".rb i").style.width=(100*n/rows.length)+"%";done+=n});
+document.getElementById("tb").style.width=(100*done/total)+"%";
+document.getElementById("tc").textContent=done+" of "+total+" done";
+document.getElementById("tp").textContent=Math.round(100*done/total)+"%"}
+app.addEventListener("change",function(e){var r=e.target.closest(".row");if(!r)return;
+if(e.target.checked)st[r.dataset.id]=1;else delete st[r.dataset.id];save();upd()});
+document.getElementById("reset").addEventListener("click",function(){st={};save();upd()});
+upd();
+</script>
